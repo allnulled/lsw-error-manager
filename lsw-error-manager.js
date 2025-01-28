@@ -1,0 +1,87 @@
+globalThis.ErrorSummary = class {
+  constructor(data) {
+    Object.assign(this, data);
+  }
+  toString() {
+    return JSON.stringify(this, null, 2);
+  }
+}
+
+globalThis.Error = class extends Error {
+  constructor(...args) {
+    super(...args);
+    this.accumulated = [];
+  }
+  toString() {
+    return JSON.stringify(this, null, 2);
+  }
+  toJSON() {
+    const data = {
+      name: this.name || "Error",
+      message: this.message || "",
+      stack: this.stack ? this.stack.split("\n    at ") : "",
+      ...this,
+    };
+    if(this.accumulated && this.accumulated.length) {
+      data.accumulated = this.accumulated;
+    }
+    return data;
+  }
+  add(error) {
+    this.accumulated.unshift(error);
+    return this;
+  }
+  summarized() {
+    let uniqueTraces = [];
+    let commonTraces = [];
+    // Recopilar las trazas de la pila de errores acumulados
+    const allStacks = this.accumulated.map(
+      (error) => (error.stack ? error.stack.split("\n    at ") : [])
+    );
+    // Si no hay acumulados, no hay comunes ni únicos
+    if (allStacks.length === 0) {
+      return new ErrorSummary({
+        name: this.name,
+        message: this.message,
+        stack: this.stack ? this.stack.split("\n    at ") : [],
+        uniqueTraces: uniqueTraces,
+        commonTraces: commonTraces,
+      });
+    }
+    // Identificar trazas comunes
+    const firstStack = allStacks[0];
+    for (let i = 0; i < firstStack.length; i++) {
+      const trace = firstStack[i];
+      let isCommon = true;
+      for (let j = 1; j < allStacks.length; j++) {
+        if (!allStacks[j].includes(trace)) {
+          isCommon = false;
+          break;
+        }
+      }
+      if (isCommon) {
+        commonTraces.push(trace);
+      }
+    }
+    // Identificar trazas únicas
+    for (let i = 0; i < allStacks.length; i++) {
+      const uniqueForStack = [];
+      for (let j = 0; j < allStacks[i].length; j++) {
+        const trace = allStacks[i][j];
+        if (!commonTraces.includes(trace)) {
+          uniqueForStack.push(trace);
+        }
+      }
+      uniqueTraces.push(uniqueForStack);
+    }
+    return new ErrorSummary({
+      ...this,
+      name: this.name,
+      message: this.message,
+      stack: this.stack ? this.stack.split("\n    at ") : [],
+      uniqueTraces: uniqueTraces,
+      commonTraces: commonTraces,
+    });
+  }
+  
+}
