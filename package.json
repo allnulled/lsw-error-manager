@@ -1,0 +1,14 @@
+{
+  "name": "@allnulled/lsw-error-manager",
+  "version": "1.0.0",
+  "description": "Error manager tool for LSW.",
+  "main": "lsw-error-manager.js",
+  "scripts": {
+    "build": "echo 'no building for node.js of lsw-error-manager'",
+    "versionate": "echo 'no versionate for node.js of lsw-error-manager'",
+    "test": "npx universal-tester test.js"
+  },
+  "keywords": ["error"],
+  "author": "allnulled",
+  "license": "WTFPL"
+}
