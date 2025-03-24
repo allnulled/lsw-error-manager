@@ -7,10 +7,10 @@ globalThis.ErrorSummary = class {
   }
 }
 
-globalThis.Error = class extends Error {
+globalThis.Error = class AccumulableError extends Error {
   constructor(...args) {
     super(...args);
-    this.accumulated = [];
+    this.$accumulatedErrors = [];
   }
   toString() {
     return JSON.stringify(this, null, 2);
@@ -22,20 +22,29 @@ globalThis.Error = class extends Error {
       stack: this.stack ? this.stack.split("\n    at ") : "",
       ...this,
     };
-    if(this.accumulated && this.accumulated.length) {
-      data.accumulated = this.accumulated;
+    if(this.$accumulatedErrors && this.$accumulatedErrors.length) {
+      data.$accumulatedErrors = this.$accumulatedErrors;
     }
     return data;
   }
-  add(error) {
-    this.accumulated.unshift(error);
+  unified() {
+    this.message = this.message + "\n" + this.$accumulatedErrors.map((e,i) => (i+1) + ': ' + e.name + ': ' + e.message).join("\n");
+    this.$accumulatedErrors = [];
+    return this;
+  }
+  prependError(error) {
+    this.$accumulatedErrors.unshift(error);
+    return this;
+  }
+  appendError(error) {
+    this.$accumulatedErrors.push(error);
     return this;
   }
   summarized() {
     let uniqueTraces = [];
     let commonTraces = [];
     // Recopilar las trazas de la pila de errores acumulados
-    const allStacks = this.accumulated.map(
+    const allStacks = this.$accumulatedErrors.map(
       (error) => (error.stack ? error.stack.split("\n    at ") : [])
     );
     // Si no hay acumulados, no hay comunes ni únicos

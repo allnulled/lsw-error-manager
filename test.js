@@ -10,13 +10,13 @@ describe("LSW Error Manager API Test", function (it) {
           try {
             throw new Error("OriginalError");
           } catch (error) {
-            throw error.add(new Error("Phase 1.1.1 broken"));
+            throw error.appendError(new Error("Phase 1.1.1 broken"));
           }
         } catch (error) {
-          throw error.add(new Error("Phase 1.1 broken"));
+          throw error.appendError(new Error("Phase 1.1 broken"));
         }
       } catch (error) {
-        throw error.add(new Error("Phase 1 broken"));
+        throw error.appendError(new Error("Phase 1 broken"));
       }
     } catch (error) {
       console.log(`Phase 1 aborted due to: ${error}`);
